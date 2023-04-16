@@ -2,8 +2,11 @@ import requests
 from bs4 import BeautifulSoup
 import re
 from get_links import links_on_page
-import networkx
+import networkx as nx
 from tqdm import tqdm
+import matplotlib.pyplot as plt
+from netwulf import visualize
+
 def names_from_table():
     url = "https://en.wikipedia.org/wiki/List_of_animal_names"
     
@@ -51,15 +54,33 @@ if __name__ == "__main__":
     animal_name = "Elephant"
     names = names_from_table()
     for name in tqdm(names.keys()):
-        result = links_on_page(animal_name=name.replace("/wiki/", ""))
+        cleaned_name = name.replace("/wiki/", "")
+        result = links_on_page(animal_name=cleaned_name)
     
         for entry in result:
             if entry in names:
-                pair = ("/wiki/"+name,entry)
-                pair_inverted = (entry,"/wiki/"+name)
+                pair = ("/wiki/"+cleaned_name,entry)
+                pair_inverted = (entry,"/wiki/"+cleaned_name)
                 if pair in edgelist_weights:
                     edgelist_weights[pair] += 1
                 elif pair_inverted in edgelist_weights:
-                    edgelist_weights[pair_inverted] = 1
+                    edgelist_weights[pair_inverted] += 1
                 else:
                     edgelist_weights[pair] = 1
+
+    values = list(edgelist_weights.values())
+    plt.hist(values, bins=max(values), edgecolor='black')
+    plt.xticks(range(1, max(values) + 1))
+    plt.xlabel('Number of references')
+    plt.ylabel('Frequency')
+    plt.show()
+    
+    edgelist = [None]*len(edgelist_weights)
+    for i,items in enumerate(edgelist_weights):
+        edgelist[i] = (items[0].replace("/wiki/", ""),items[1].replace("/wiki/", ""),int(edgelist_weights[items]))
+    G = nx.Graph()
+
+    #for entries in edgelist:
+    G.add_weighted_edges_from(edgelist)
+    print(G)
+    network, config = visualize(G)
