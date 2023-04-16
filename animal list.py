@@ -49,6 +49,16 @@ def names_from_table():
 
     return names
 
+def is_redirect(name):
+    url = f'https://en.wikipedia.org/w/api.php?action=query&titles={name}&redirects=1&format=json'
+    response = requests.get(url)
+    data = response.json()
+    if "redirects" in data["query"]:
+        return data["query"]["redirects"][0]["to"]
+    else: 
+        return name
+    
+    
 if __name__ == "__main__":
     edgelist_weights = {}
     animal_name = "Elephant"
