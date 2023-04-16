@@ -68,6 +68,7 @@ if __name__ == "__main__":
         result = links_on_page(animal_name=cleaned_name)
     
         for entry in result:
+            entry = name if is_redirect(name) != name else entry
             if entry in names:
                 pair = ("/wiki/"+cleaned_name,entry)
                 pair_inverted = (entry,"/wiki/"+cleaned_name)
