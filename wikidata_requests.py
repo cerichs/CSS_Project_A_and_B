@@ -27,8 +27,8 @@ if __name__ == "__main__":
       SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE]". }
       {
         SELECT DISTINCT ?item WHERE {
-          ?item p:P7905 ?statement0.
-          ?statement0 (ps:P7905) _:anyValueP7905.
+          ?item p:P4024 ?statement0.
+          ?statement0 (ps:P4024) _:anyValueP4024.
         }
       }
     }
@@ -45,3 +45,7 @@ if __name__ == "__main__":
         else:
             sub_list = [ids["itemLabel"]["value"] for ids in data[entries:(len(data))]]
             temp = temp + get_wiki_links(sub_list)
+    file = open('animal_links.txt','w')
+    for item in temp:
+    	file.write(item+"\n")
+    file.close()
