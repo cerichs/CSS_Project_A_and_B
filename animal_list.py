@@ -63,15 +63,18 @@ if __name__ == "__main__":
     edgelist_weights = {}
     animal_name = "Elephant"
     names = names_from_table()
-    for name in tqdm(names.keys()):
-        cleaned_name = name.replace("/wiki/", "")
-        result = links_on_page(animal_name=cleaned_name)
+    with open('animal_links.txt', 'r') as f:
+        entries = f.read().splitlines()
+    for name in tqdm(entries):
+        temp_string = name.split("/")[-1]
+        #cleaned_name = name.replace("/wiki/", "")
+        result = links_on_page(animal_name=temp_string)
     
         for entry in result:
-            entry = name if is_redirect(name) != name else entry
+            #entry = name if is_redirect(name) != name else entry
             if entry in names:
-                pair = ("/wiki/"+cleaned_name,entry)
-                pair_inverted = (entry,"/wiki/"+cleaned_name)
+                pair = ("/wiki/"+temp_string,entry)
+                pair_inverted = (entry,"/wiki/"+temp_string)
                 if pair in edgelist_weights:
                     edgelist_weights[pair] += 1
                 elif pair_inverted in edgelist_weights:

@@ -15,7 +15,7 @@ def get_wiki_links(item_ids):
     wiki_links = []
     for item_id in item_ids:
         wikipedia_url = data["entities"][item_id]["sitelinks"]
-        if "enwiki" in wikipedia_url: 
+        if "enwiki" in wikipedia_url: # only save if the page has a reference to an english wikipage
             link = wikipedia_url["enwiki"]["url"]
             wiki_links.append(link)
     return wiki_links
@@ -47,5 +47,5 @@ if __name__ == "__main__":
             temp = temp + get_wiki_links(sub_list)
     file = open('animal_links.txt','w')
     for item in temp:
-    	file.write(item+"\n")
+        file.write(item+"\n")
     file.close()
