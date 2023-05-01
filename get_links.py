@@ -8,13 +8,8 @@ Created on Wed Apr 12 09:03:55 2023
 import requests
 import json
 from bs4 import BeautifulSoup
-def links_on_page(animal_name="Elephant",multiple=False):
-    if multiple:
-        querys = '|'.join(animal_name)
-        url = "https://en.wikipedia.org/w/api.php?action=parse&pages="+querys+"&format=json"
-    else:
-        querys = animal_name
-        url = "https://en.wikipedia.org/w/api.php?action=parse&page="+querys+"&format=json"
+def links_on_page(animal_name="Elephant"):
+    url = "https://en.wikipedia.org/w/api.php?action=parse&page="+animal_name+"&format=json"
     response = requests.get(url)
     html = json.loads(response.content.decode('utf-8'))['parse']['text']['*']
     soup = BeautifulSoup(html, 'html.parser')

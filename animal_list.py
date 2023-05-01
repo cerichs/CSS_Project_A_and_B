@@ -6,6 +6,7 @@ import networkx as nx
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from netwulf import visualize
+import json
 
 def names_from_table():
     url = "https://en.wikipedia.org/wiki/List_of_animal_names"
@@ -81,6 +82,10 @@ if __name__ == "__main__":
                     edgelist_weights[pair_inverted] += 1
                 else:
                     edgelist_weights[pair] = 1
+    with open('data_plain.json', 'w') as fp:
+        json.dump(edgelist_weights, fp)
+    with open('data_pretty.json', 'w') as fp:
+        json.dump(edgelist_weights, fp, sort_keys=True, indent=4)
 
     values = list(edgelist_weights.values())
     plt.hist(values, bins=max(values), edgecolor='black')
