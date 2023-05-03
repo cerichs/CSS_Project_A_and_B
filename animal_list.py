@@ -5,7 +5,7 @@ from get_links import links_on_page
 import networkx as nx
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from netwulf import visualize
+#from netwulf import visualize
 import json
 
 def names_from_table():
@@ -62,10 +62,16 @@ def is_redirect(name):
     
 if __name__ == "__main__":
     edgelist_weights = {}
-    animal_name = "Elephant"
+    edgelist_weights_long = {}
+    #animal_name = "Elephant"
     names = names_from_table()
+    names_long = {}
     with open('animal_links.txt', 'r') as f:
         entries = f.read().splitlines()
+    for name in tqdm(entries):
+        name_temp = name.split("/")[-1]
+        names_long[name_temp] = 0
+    
     for name in tqdm(entries):
         temp_string = name.split("/")[-1]
         #cleaned_name = name.replace("/wiki/", "")
@@ -82,8 +88,16 @@ if __name__ == "__main__":
                     edgelist_weights[pair_inverted] += 1
                 else:
                     edgelist_weights[pair] = 1
+            if entry.split("/")[-1] in names_long:
+                pair = (temp_string, entry.split("/")[-1])
+                if pair in edgelist_weights_long:
+                    edgelist_weights_long[pair] += 1
+                else:
+                    edgelist_weights_long[pair] = 1
     with open('data_plain.json', 'w') as fp:
         json.dump(edgelist_weights, fp)
+    with open('data_plain_long.json', 'w') as fp:
+        json.dump(edgelist_weights_long, fp)
     with open('data_pretty.json', 'w') as fp:
         json.dump(edgelist_weights, fp, sort_keys=True, indent=4)
 
@@ -102,4 +116,4 @@ if __name__ == "__main__":
     #for entries in edgelist:
     G.add_weighted_edges_from(edgelist)
     print(G)
-    network, config = visualize(G)
+    #network, config = visualize(G)
