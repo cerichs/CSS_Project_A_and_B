@@ -7,6 +7,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 #from netwulf import visualize
 import json
+import pickle
 
 def names_from_table():
     url = "https://en.wikipedia.org/wiki/List_of_animal_names"
@@ -66,7 +67,7 @@ if __name__ == "__main__":
     #animal_name = "Elephant"
     names = names_from_table()
     names_long = {}
-    with open('animal_links.txt', 'r') as f:
+    with open('animal_links_reptile.txt', 'r') as f:
         entries = f.read().splitlines()
     for name in tqdm(entries):
         name_temp = name.split("/")[-1]
@@ -94,12 +95,12 @@ if __name__ == "__main__":
                     edgelist_weights_long[pair] += 1
                 else:
                     edgelist_weights_long[pair] = 1
-    with open('data_plain.json', 'w') as fp:
-        json.dump(edgelist_weights, fp)
-    with open('data_plain_long.json', 'w') as fp:
-        json.dump(edgelist_weights_long, fp)
-    with open('data_pretty.json', 'w') as fp:
-        json.dump(edgelist_weights, fp, sort_keys=True, indent=4)
+    with open('data_plain_reptile.pickle', 'wb') as fp:
+        pickle.dump(edgelist_weights, fp, protocol=pickle.HIGHEST_PROTOCOL)
+        #json.dump(edgelist_weights, fp)
+    with open('data_plain_long_reptile.pickle', 'wb') as fp:
+        pickle.dump(edgelist_weights_long, fp, protocol=pickle.HIGHEST_PROTOCOL)
+        #json.dump(edgelist_weights_long, fp)
 
     values = list(edgelist_weights.values())
     plt.hist(values, bins=max(values), edgecolor='black')

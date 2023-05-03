@@ -33,7 +33,20 @@ if __name__ == "__main__":
       }
     }
     '''
-    r = requests.get(url, params = {'format': 'json', 'query': query})
+    query_reptile = '''
+    SELECT DISTINCT ?item ?itemLabel WHERE {
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE]". }
+      {
+        SELECT DISTINCT ?item WHERE {
+          ?item p:P4024 ?statement0.
+          ?statement0 (ps:P4024) _:anyValueP4024.
+          ?item p:P5473 ?statement1.
+          ?statement1 (ps:P5473) _:anyValueP5473.
+        }
+      }
+    }
+    '''
+    r = requests.get(url, params = {'format': 'json', 'query': query_reptile})
     data = r.json()
     
     data = data["results"]["bindings"]
@@ -45,7 +58,7 @@ if __name__ == "__main__":
         else:
             sub_list = [ids["itemLabel"]["value"] for ids in data[entries:(len(data))]]
             temp = temp + get_wiki_links(sub_list)
-    file = open('animal_links.txt','w')
+    file = open('animal_links_reptile.txt','w')
     for item in temp:
         file.write(item+"\n")
     file.close()
