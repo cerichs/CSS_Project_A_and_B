@@ -6,6 +6,3 @@ data/text_analysis_df.parquet
 top_words.csv
 data/top_words.csv
 
-.data/
-data
-data/
