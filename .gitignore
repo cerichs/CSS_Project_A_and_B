@@ -1,2 +1,11 @@
 *venv/
 __pycache__/get_links.cpython-39.pyc
+
+data/top_words.json
+data/text_analysis_df.parquet
+top_words.csv
+data/top_words.csv
+
+.data/
+data
+data/

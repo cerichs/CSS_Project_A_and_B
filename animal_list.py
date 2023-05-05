@@ -5,7 +5,9 @@ from get_links import links_on_page
 import networkx as nx
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from netwulf import visualize
+#from netwulf import visualize
+import json
+import pickle
 
 def names_from_table():
     url = "https://en.wikipedia.org/wiki/List_of_animal_names"
@@ -61,23 +63,44 @@ def is_redirect(name):
     
 if __name__ == "__main__":
     edgelist_weights = {}
-    animal_name = "Elephant"
+    edgelist_weights_long = {}
+    #animal_name = "Elephant"
     names = names_from_table()
-    for name in tqdm(names.keys()):
-        cleaned_name = name.replace("/wiki/", "")
-        result = links_on_page(animal_name=cleaned_name)
+    names_long = {}
+    with open('animal_links_reptile.txt', 'r') as f:
+        entries = f.read().splitlines()
+    for name in tqdm(entries):
+        name_temp = name.split("/")[-1]
+        names_long[name_temp] = 0
+    
+    for name in tqdm(entries):
+        temp_string = name.split("/")[-1]
+        #cleaned_name = name.replace("/wiki/", "")
+        result = links_on_page(animal_name=temp_string)
     
         for entry in result:
-            entry = name if is_redirect(name) != name else entry
+            #entry = name if is_redirect(name) != name else entry
             if entry in names:
-                pair = ("/wiki/"+cleaned_name,entry)
-                pair_inverted = (entry,"/wiki/"+cleaned_name)
+                pair = ("/wiki/"+temp_string,entry)
+                pair_inverted = (entry,"/wiki/"+temp_string)
                 if pair in edgelist_weights:
                     edgelist_weights[pair] += 1
                 elif pair_inverted in edgelist_weights:
                     edgelist_weights[pair_inverted] += 1
                 else:
                     edgelist_weights[pair] = 1
+            if entry.split("/")[-1] in names_long:
+                pair = (temp_string, entry.split("/")[-1])
+                if pair in edgelist_weights_long:
+                    edgelist_weights_long[pair] += 1
+                else:
+                    edgelist_weights_long[pair] = 1
+    with open('data_plain_reptile.pickle', 'wb') as fp:
+        pickle.dump(edgelist_weights, fp, protocol=pickle.HIGHEST_PROTOCOL)
+        #json.dump(edgelist_weights, fp)
+    with open('data_plain_long_reptile.pickle', 'wb') as fp:
+        pickle.dump(edgelist_weights_long, fp, protocol=pickle.HIGHEST_PROTOCOL)
+        #json.dump(edgelist_weights_long, fp)
 
     values = list(edgelist_weights.values())
     plt.hist(values, bins=max(values), edgecolor='black')
@@ -94,4 +117,4 @@ if __name__ == "__main__":
     #for entries in edgelist:
     G.add_weighted_edges_from(edgelist)
     print(G)
-    network, config = visualize(G)
+    #network, config = visualize(G)
