@@ -11,21 +11,21 @@ import pickle
 
 
 if __name__ == "__main__":
-    with open('data/data_plain.pickle', 'rb') as handle:
+    with open('data/data_plain_reptile.pickle', 'rb') as handle:
         a = pickle.load(handle)
-    with open('data/data_plain_long.pickle', 'rb') as handle:
+    with open('data/data_plain_long_reptile.pickle', 'rb') as handle:
         b = pickle.load(handle)
     
-    values = list(b.values())
+    values = list(a.values())
     plt.hist(values, bins=max(values), edgecolor='black')
     plt.xticks(range(1, max(values) + 1))
     plt.xlabel('Number of references')
     plt.ylabel('Frequency')
     plt.show()
     
-    edgelist = [None]*len(b)
-    for i,items in enumerate(b):
-        edgelist[i] = (items[0].replace("/wiki/", ""),items[1].replace("/wiki/", ""),int(b[items]))
+    edgelist = [None]*len(a)
+    for i,items in enumerate(a):
+        edgelist[i] = (items[0].replace("/wiki/", ""),items[1].replace("/wiki/", ""),int(a[items]))
     G = nx.DiGraph()
 
     #for entries in edgelist:
