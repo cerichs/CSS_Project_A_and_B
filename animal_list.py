@@ -67,7 +67,7 @@ if __name__ == "__main__":
     #animal_name = "Elephant"
     names = names_from_table() # Gets all the entries in the larger table on https://en.wikipedia.org/wiki/List_of_animal_names
     names_long = {}
-    with open('data/animal_links_reptile.txt', 'r') as f:
+    with open('data/animal_links.txt', 'r') as f:
         entries = f.read().splitlines()
     for name in tqdm(entries):
         name_temp = name.split("/")[-1]
@@ -97,11 +97,11 @@ if __name__ == "__main__":
                         edgelist_weights_long[pair] += 1 # If the pair is already in the dict, the weight is increased
                     else:
                         edgelist_weights_long[pair] = 1 # If the pair is not in the dict, the weight is 1
-    with open('data/reptile_to_animal_list.pickle', 'wb') as fp:
+    with open('data/all_animal_to_animal_list.pickle', 'wb') as fp:
         pickle.dump(edgelist_weights, fp, protocol=pickle.HIGHEST_PROTOCOL)
-    with open('data/reptile_to_reptile.pickle', 'wb') as fp:
+    with open('data/all_animal_to_all_animal.pickle', 'wb') as fp:
         pickle.dump(edgelist_weights_long, fp, protocol=pickle.HIGHEST_PROTOCOL)
-    with open('data/Reptile_attributes.pickle', 'wb') as fp:
+    with open('data/animal_attributes.pickle', 'wb') as fp:
         pickle.dump(attributes_dict, fp, protocol=pickle.HIGHEST_PROTOCOL)
 
 
@@ -120,8 +120,14 @@ if __name__ == "__main__":
     #for entries in edgelist:
     G.add_weighted_edges_from(edgelist)
     print(G)
+    to_remove =[]
     for Names in tqdm(G.nodes):
-        G.nodes[Names]['Class'], G.nodes[Names]['Order'], G.nodes[Names]['Family'], _ = attributes_dict[Names].values()
+        if Names in attributes_dict:
+            G.nodes[Names]['Class'], G.nodes[Names]['Order'], G.nodes[Names]['Superfamily'], G.nodes[Names]['Family'], _ = attributes_dict[Names].values()
+        else:
+            to_remove.append(Names) # Some nodes get added to graph even though they are redirects, the cause is known but no good way to handle it
+    for names in to_remove:
+        G.remove_node(names)
     data1 = nx.node_link_data(G)
-    json.dump(data1, open('data/data_total.json','w'))
+    json.dump(data1, open('data/data_total_all_animal.json','w'))
     #network, config = visualize(G)
