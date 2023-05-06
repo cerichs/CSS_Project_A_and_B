@@ -11,9 +11,9 @@ import pickle
 
 
 if __name__ == "__main__":
-    with open('data/data_plain.pickle', 'rb') as handle:
+    with open('data/data_plain_reptile.pickle', 'rb') as handle:
         a = pickle.load(handle)
-    with open('data/data_plain_long_reptile_test.pickle', 'rb') as handle:
+    with open('data/data_plain_long_reptile.pickle', 'rb') as handle:
         b = pickle.load(handle)
     with open('data/Reptile_attributes.pickle', 'rb') as handle:
         c = pickle.load(handle)
