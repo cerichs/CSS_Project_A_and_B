@@ -14,9 +14,9 @@ import numpy as np
 if __name__ == "__main__":
     with open('data/data_plain_reptile.pickle', 'rb') as handle:
         a = pickle.load(handle)
-    with open('data/data_plain_long_reptile_test.pickle', 'rb') as handle:
+    with open('data/all_animal_to_all_animal.pickle', 'rb') as handle:
         b = pickle.load(handle)
-    with open('data/Reptile_attributes.pickle', 'rb') as handle:
+    with open('data/animal_attributes.pickle', 'rb') as handle:
         c = pickle.load(handle)
     
     values = list(b.values())
@@ -26,6 +26,7 @@ if __name__ == "__main__":
     plt.xlabel('Number of references')
     plt.ylabel('Frequency')
     plt.show()
+    
     
     edgelist = [None]*len(b)
     for i,items in enumerate(b):
@@ -46,6 +47,15 @@ if __name__ == "__main__":
         G.remove_node(names)
     print(G)
     network, config = visualize(G)
+
+    degree = []
+    for node in G.nodes():
+        degree.append(G.degree(node))
+    plt.hist(degree,bins=np.arange(max(values))-0.5, edgecolor='black')
+    plt.title("Degree distribution")
+    plt.xlabel('Number of degrees')
+    plt.ylabel('Frequency')
+    plt.show()
     #data1 = nx.node_link_data(G)
     #json.dump(data1, open('data/data_total.json','w'))
 

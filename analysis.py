@@ -7,6 +7,8 @@ import numpy as np
 from tqdm import tqdm
 import colorsys
 from netwulf import visualize
+import pandas as pd
+from sklearn.metrics import confusion_matrix
 
 def clean_family(string):
     if string is None:
@@ -32,25 +34,25 @@ def add_attr(Graph,attr_dict):
         Graph.remove_node(names)
     return Graph
 
-def same_family(G):
-    same_family_fractions = []
+def same_class(G):
+    same_class_fractions = []
     for node in G.nodes():
-        same_family_neighbors = 0
+        same_class_neighbors = 0
         total_neighbors = 0
         
         for neighbor in G.neighbors(node):
             if G.nodes[neighbor]["Class"] == G.nodes[node]["Class"]:
-                same_family_neighbors += 1
+                same_class_neighbors += 1
             total_neighbors += 1
         
         if total_neighbors > 0:
-            same_field_fraction = same_family_neighbors / total_neighbors
+            same_field_fraction = same_class_neighbors / total_neighbors
         else:
             same_field_fraction = 0
-        same_family_fractions.append(same_field_fraction)
-    return same_family_fractions
+        same_class_fractions.append(same_field_fraction)
+    return same_class_fractions
 
-def same_family_rand(Graph):
+def same_class_rand(Graph):
     shuffled_G = Graph.copy()
     Family = [Graph.nodes[node]["Class"] for node in Graph.nodes()]
     random.shuffle(Family)
@@ -59,20 +61,20 @@ def same_family_rand(Graph):
         shuffled_G.nodes[node]["Class"] = Family[i]
     return shuffled_G
 
-def same_family_rand_n(Graph, n = 250):
+def same_class_rand_n(Graph, n = 250):
     results = []
     Family = [Graph.nodes[node]["Class"] for node in Graph.nodes()]
     for i in range(n):
-        temp = same_family_rand(Graph)
-        results.append(np.mean(same_family(temp)))
+        temp = same_class_rand(Graph)
+        results.append(np.mean(same_class(temp)))
     plt.hist(results,label = "Random", bins = 20)
     plt.xlabel("Fraction")
     plt.ylabel("Frequency")
-    plt.title("Fraction of edges in same family")
+    plt.title("Fraction of edges in same Class")
     plt.show()
 
 def compute_modularity(Graph,partitioning):
-    L = Graph.number_of_edges()
+    L = Graph.number_of_edges() * 2 # In = out
     M = 0
     communities = set(partitioning.values())
 
@@ -88,7 +90,7 @@ def compute_modularity(Graph,partitioning):
 def double_edge_swap(GG,N):
     i = 0
     G_copy = GG.copy()
-    while(i<2*N):
+    while(i<N):
         edges = list(G_copy.edges()) # update edges after adding and removal
         (u, v), (x, y) = random.sample(edges, 2) # picking two random edges
         if (u != v) and (v != x) and (u, y) not in G_copy.edges() and (x, v) not in G_copy.edges(): # checking conditions
@@ -96,7 +98,9 @@ def double_edge_swap(GG,N):
             G_copy.add_edge(x, v)
             G_copy.remove_edge(u, v)
             G_copy.remove_edge(x, y)
-            i+=1
+        i+=1
+        if i % 1000 == 0:
+            print(i)
     return G_copy
 
 def assortative_matrix(Graph,unique_labels):
@@ -154,15 +158,15 @@ if __name__ == "__main__":
     print(G_reptile)
     G_reptile_attr = add_attr(G_reptile,c)
 
-    # Same family fractions
-    same_family_fractions = same_family(G_reptile_attr)
-    print(f"The average fraction is: {np.mean(same_family_fractions):.3f}")
+    # Same class fractions
+    same_class_fractions = same_class(G_reptile_attr)
+    print(f"The average fraction is: {np.mean(same_class_fractions):.3f}")
 
-    # Same family fractions for random graph
-    same_family_fractions_rand = same_family_rand(G_reptile_attr)
-    print(f"The average fraction is: {np.mean(same_family(same_family_fractions_rand)):.3f}")
+    # Same class fractions for random graph
+    same_class_fractions_rand = same_class_rand(G_reptile_attr)
+    print(f"The average fraction is: {np.mean(same_class(same_class_fractions_rand)):.3f}")
 
-    # Same family fractions
+    # Same class fractions
     #same_family_rand_n(G_reptile_attr, n = 250)
 
     # Assortativity coefficient 
@@ -173,7 +177,7 @@ if __name__ == "__main__":
     print(f"Assortativity coefficient: {r1:.3f}")
 
     # Modularity Family split of Reptile Graph
-    Family_split = nx.get_node_attributes(G_reptile_attr, "Class")
+    Family_split = nx.get_node_attributes(G_reptile_attr, "Family")
 
     #Then we compute the modularity of the partitioning by using the function above
     modularity = compute_modularity(G_reptile_attr, Family_split)
@@ -189,12 +193,8 @@ if __name__ == "__main__":
         degree_2.append(G_new.degree(node))
 
     print(degree_1 == degree_2)
-    plt.hist(degree_1,bins=20)
-    plt.title("Degree for Reptile Network")
-    plt.show()
-    plt.hist(degree_2,bins=20)
-    plt.title("Degree for new Network")
-    plt.show()
+    modularity = compute_modularity(G_new, Family_split)
+    print(f"The modularity of the randomly shuffled network: {modularity:.3f}")
     """
     #Louvain algorithm
     partition = community.best_partition(G_reptile,random_state=42) # dictionary, keys are the nodes and values are communities for each node
@@ -214,6 +214,36 @@ if __name__ == "__main__":
     print("Community sizes:", sorted(size,reverse=True))
     print(f"Modularity: {modularity:.2f}")
 
+    louvain_labels = list(partition.values())
+
+    #ground truth community labels as a list
+    gt_labels = [G_reptile_attr.nodes[node_id]["Class"] for node_id in G_reptile_attr.nodes()]
+    gt_labels = [labels if labels is not None else "None" for labels in gt_labels] # convert None to string(None)
+
+    #mapping between pred labels and ground truth labels
+    label_mapping = {}
+    for louvain_label, gt_label in zip(louvain_labels, gt_labels):
+        if louvain_label not in label_mapping:
+            label_mapping[louvain_label] = gt_label
+    
+    
+    louvain_labels_mapped = [label_mapping[label] for label in louvain_labels] #convert pred labels to ground truth labels
+
+    accuracy = np.mean([1 if louvain == gt else 0 for louvain, gt in zip(louvain_labels_mapped,gt_labels)])
+    print(f"Accuracy of Louvain: {accuracy:.3f}")
+    
+    labels = sorted(set(gt_labels + louvain_labels_mapped)) #Create a sorted list of unique labels
+    num_classes = len(labels)
+
+    cm = np.zeros((num_classes, num_classes), dtype=int)
+
+    # Count the number of occurrences of each (true, pred) label pair
+    for true, pred in zip(gt_labels, louvain_labels_mapped):
+        cm[labels.index(true)][labels.index(pred)] += 1
+
+    confusion_matrix_df = pd.DataFrame(cm, index=unique_labels, columns=range(num_classes))
+    print(confusion_matrix_df)
+
     num_communities = len(set(partition.values()))
     hue_start = 0.0
     saturation = 0.8
@@ -230,7 +260,7 @@ if __name__ == "__main__":
     for i, n in enumerate(G_reptile_attr.nodes()):
         G_reptile.nodes[n]['color'] = colors[community_numb[i]]
 
-    network, config = visualize(G_reptile)
+    #network, config = visualize(G_reptile)
     #
     #visualize(G_reptile)
 
