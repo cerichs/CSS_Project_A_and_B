@@ -8,18 +8,20 @@ import matplotlib.pyplot as plt
 from netwulf import visualize
 import json
 import pickle
+import numpy as np
 
 
 if __name__ == "__main__":
     with open('data/data_plain_reptile.pickle', 'rb') as handle:
         a = pickle.load(handle)
-    with open('data/data_plain_long_reptile.pickle', 'rb') as handle:
+    with open('data/data_plain_long_reptile_test.pickle', 'rb') as handle:
         b = pickle.load(handle)
     with open('data/Reptile_attributes.pickle', 'rb') as handle:
         c = pickle.load(handle)
     
     values = list(b.values())
-    plt.hist(values, bins=max(values), edgecolor='black')
+    plt.hist(values, bins=np.arange(max(values))-0.5, edgecolor='black')
+    plt.yscale("log")
     plt.xticks(range(1, max(values) + 1))
     plt.xlabel('Number of references')
     plt.ylabel('Frequency')
@@ -42,6 +44,8 @@ if __name__ == "__main__":
             to_remove.append(Names) # Some nodes get added to graph even though they are redirects, the cause is known but no good way to handle it
     for names in to_remove:
         G.remove_node(names)
-    data1 = nx.node_link_data(G)
-    json.dump(data1, open('data/data_total.json','w'))
+    print(G)
+    network, config = visualize(G)
+    #data1 = nx.node_link_data(G)
+    #json.dump(data1, open('data/data_total.json','w'))
     

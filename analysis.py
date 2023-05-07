@@ -9,6 +9,9 @@ import colorsys
 from netwulf import visualize
 
 def clean_family(string):
+    if string is None:
+        return None
+    string = string.replace("†","").replace(" (","")
     count = 0
     for i,chara in enumerate(string):
         if chara.isupper():
@@ -22,7 +25,7 @@ def add_attr(Graph,attr_dict):
     for Names in Graph.nodes:
         if Names in attr_dict:
             Graph.nodes[Names]['Class'], Graph.nodes[Names]['Order'], Graph.nodes[Names]['Superfamily'], Graph.nodes[Names]['Family'], _ = attr_dict[Names].values()
-            Graph.nodes[Names]['Family'] = clean_family(Graph.nodes[Names]['Family'])
+            Graph.nodes[Names]['Class'] = clean_family(Graph.nodes[Names]['Class']) if Graph.nodes[Names]['Class'] is not None else None
         else:
             to_remove.append(Names) # Some nodes get added to graph even though they are redirects, the cause is known but no good way to handle it
     for names in to_remove:
@@ -36,7 +39,7 @@ def same_family(G):
         total_neighbors = 0
         
         for neighbor in G.neighbors(node):
-            if G.nodes[neighbor]["Family"] == G.nodes[node]["Family"]:
+            if G.nodes[neighbor]["Class"] == G.nodes[node]["Class"]:
                 same_family_neighbors += 1
             total_neighbors += 1
         
@@ -49,16 +52,16 @@ def same_family(G):
 
 def same_family_rand(Graph):
     shuffled_G = Graph.copy()
-    Family = [Graph.nodes[node]["Family"] for node in Graph.nodes()]
+    Family = [Graph.nodes[node]["Class"] for node in Graph.nodes()]
     random.shuffle(Family)
 
     for i, node in enumerate(shuffled_G.nodes()):
-        shuffled_G.nodes[node]["Family"] = Family[i]
+        shuffled_G.nodes[node]["Class"] = Family[i]
     return shuffled_G
 
 def same_family_rand_n(Graph, n = 250):
     results = []
-    Family = [Graph.nodes[node]["Family"] for node in Graph.nodes()]
+    Family = [Graph.nodes[node]["Class"] for node in Graph.nodes()]
     for i in range(n):
         temp = same_family_rand(Graph)
         results.append(np.mean(same_family(temp)))
@@ -99,12 +102,12 @@ def double_edge_swap(GG,N):
 def assortative_matrix(Graph,unique_labels):
     matrix = np.zeros((len(unique_labels),len(unique_labels)))
 
-    values = nx.get_node_attributes(Graph, "Family").values()
+    values = nx.get_node_attributes(Graph, "Class").values()
     num_values = len(values)
 
     for start, end in Graph.edges(): # Looping over all edges in graph (since its undirected its not really start and stop)
-        x = Graph.nodes[start]["Family"] # Getting the start point of the edge 
-        y = Graph.nodes[end]["Family"] # Getting the end point of the edge 
+        x = Graph.nodes[start]["Class"] # Getting the start point of the edge 
+        y = Graph.nodes[end]["Class"] # Getting the end point of the edge 
         if x in unique_labels: 
             x = unique_labels[x]
         else:
@@ -128,17 +131,27 @@ def assortative_matrix(Graph,unique_labels):
 
 if __name__ == "__main__":
     # Load Network
-    with open('data/data_plain_long_reptile.pickle', 'rb') as handle:
+    with open('data/all_animal_to_all_animal.pickle', 'rb') as handle:
         b = pickle.load(handle)
-    with open('data/Reptile_attributes.pickle', 'rb') as handle:
+    with open('data/animal_attributes.pickle', 'rb') as handle:
         c = pickle.load(handle)
-
-    edgelist = [None]*len(b)
+    banned_set = {"Animal","Reptile","Arthropod","Chordate","Bird","Rodent","Insect"}
+    for items in c:
+        banned_set.add(clean_family(c[items]["Class:"]))
+        banned_set.add(clean_family(c[items]["Order:"]))
+        banned_set.add(clean_family(c[items]["Superfamily:"]))
+        banned_set.add(clean_family(c[items]["Family:"]))
+    #edgelist = [None]*len(b)
+    banned_set = {}
+    edgelist = []
     for i,items in enumerate(b):
-        edgelist[i] = (items[0].replace("/wiki/", ""),items[1].replace("/wiki/", ""),int(b[items]))
+        if items[0] not in banned_set and items[1] not in banned_set:
+            edgelist.append([items[0].replace("/wiki/", ""),items[1].replace("/wiki/", ""),int(b[items])])
     G_reptile = nx.Graph()
+    
 
     G_reptile.add_weighted_edges_from(edgelist)
+    print(G_reptile)
     G_reptile_attr = add_attr(G_reptile,c)
 
     # Same family fractions
@@ -150,17 +163,17 @@ if __name__ == "__main__":
     print(f"The average fraction is: {np.mean(same_family(same_family_fractions_rand)):.3f}")
 
     # Same family fractions
-    same_family_rand_n(G_reptile_attr, n = 250)
+    #same_family_rand_n(G_reptile_attr, n = 250)
 
     # Assortativity coefficient 
-    labels = np.unique([G_reptile_attr.nodes[node]["Order"] for node in G_reptile_attr.nodes()])
+    labels = np.unique([G_reptile_attr.nodes[node]["Class"] for node in G_reptile_attr.nodes() if G_reptile_attr.nodes[node]["Class"] is not None])
     unique_labels = {name: i for i,name in enumerate(labels)}
     unique_labels[None] = len(unique_labels)
     r1 = assortative_matrix(G_reptile_attr,unique_labels)
     print(f"Assortativity coefficient: {r1:.3f}")
 
     # Modularity Family split of Reptile Graph
-    Family_split = nx.get_node_attributes(G_reptile_attr, "Order")
+    Family_split = nx.get_node_attributes(G_reptile_attr, "Class")
 
     #Then we compute the modularity of the partitioning by using the function above
     modularity = compute_modularity(G_reptile_attr, Family_split)
@@ -216,7 +229,10 @@ if __name__ == "__main__":
     community_numb = list(partition.values())
     for i, n in enumerate(G_reptile_attr.nodes()):
         G_reptile.nodes[n]['color'] = colors[community_numb[i]]
-    #network, config = visualize(G_reptile)
+
+    network, config = visualize(G_reptile)
+    #
+    #visualize(G_reptile)
 
     colors = []
     for i in range(len(unique_labels)):
@@ -224,9 +240,14 @@ if __name__ == "__main__":
         r, g, b = colorsys.hsv_to_rgb(hue, saturation, value)
         color_hex = "#{:02x}{:02x}{:02x}".format(int(r * 255), int(g * 255), int(b * 255))
         colors.append(color_hex)
-    
+    print(G_reptile_attr)
+    #print(unique_labels)
     print(f"Amount of unique familys in dataset: {len(unique_labels):.0f}")
     for i, n in enumerate(G_reptile_attr.nodes()):
-        G_reptile.nodes[n]['color'] = colors[unique_labels[G_reptile_attr.nodes[n]["Order"]]]
+        G_reptile.nodes[n]['color'] = colors[unique_labels[G_reptile_attr.nodes[n]["Class"]]]
+    for j in unique_labels.keys():
+        if j in ["Reptilia", "Mammalia", "Amphibia", "Arachnida", "Aves", "Actinopterygii", "Insecta"]:
+            print("Class: "+j+" Hexcode: " + colors[unique_labels[j]])
+    #network, config = visualize(G_reptile)
 
-    network, config = visualize(G_reptile)
+    print("test")
