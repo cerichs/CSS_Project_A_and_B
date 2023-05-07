@@ -7,6 +7,8 @@ import numpy as np
 from tqdm import tqdm
 import colorsys
 from netwulf import visualize
+import pandas as pd
+from sklearn.metrics import confusion_matrix
 
 def clean_family(string):
     if string is None:
@@ -214,6 +216,36 @@ if __name__ == "__main__":
     print("Community sizes:", sorted(size,reverse=True))
     print(f"Modularity: {modularity:.2f}")
 
+    louvain_labels = list(partition.values())
+
+    #ground truth community labels as a list
+    gt_labels = [G_reptile_attr.nodes[node_id]["Class"] for node_id in G_reptile_attr.nodes()]
+    gt_labels = [labels if labels is not None else "None" for labels in gt_labels] # convert None to string(None)
+
+    #mapping between pred labels and ground truth labels
+    label_mapping = {}
+    for louvain_label, gt_label in zip(louvain_labels, gt_labels):
+        if louvain_label not in label_mapping:
+            label_mapping[louvain_label] = gt_label
+    
+    
+    louvain_labels_mapped = [label_mapping[label] for label in louvain_labels] #convert pred labels to ground truth labels
+
+    accuracy = np.mean([1 if louvain == gt else 0 for louvain, gt in zip(louvain_labels_mapped,gt_labels)])
+    print(f"Accuracy of Louvain: {accuracy:.3f}")
+    
+    labels = sorted(set(gt_labels + louvain_labels_mapped)) #Create a sorted list of unique labels
+    num_classes = len(labels)
+
+    cm = np.zeros((num_classes, num_classes), dtype=int)
+
+    # Count the number of occurrences of each (true, pred) label pair
+    for true, pred in zip(gt_labels, louvain_labels_mapped):
+        cm[labels.index(true)][labels.index(pred)] += 1
+
+    confusion_matrix_df = pd.DataFrame(cm, index=unique_labels, columns=range(num_classes))
+    print(confusion_matrix_df)
+
     num_communities = len(set(partition.values()))
     hue_start = 0.0
     saturation = 0.8
@@ -230,7 +262,7 @@ if __name__ == "__main__":
     for i, n in enumerate(G_reptile_attr.nodes()):
         G_reptile.nodes[n]['color'] = colors[community_numb[i]]
 
-    network, config = visualize(G_reptile)
+    #network, config = visualize(G_reptile)
     #
     #visualize(G_reptile)
 
