@@ -37,16 +37,16 @@ def add_attr(Graph,attr_dict):
 def same_class(G):
     same_class_fractions = []
     for node in G.nodes():
-        same_class_fractions = 0
+        same_class_neighbors = 0
         total_neighbors = 0
         
         for neighbor in G.neighbors(node):
             if G.nodes[neighbor]["Class"] == G.nodes[node]["Class"]:
-                same_class_fractions += 1
+                same_class_neighbors += 1
             total_neighbors += 1
         
         if total_neighbors > 0:
-            same_field_fraction = same_class_fractions / total_neighbors
+            same_field_fraction = same_class_neighbors / total_neighbors
         else:
             same_field_fraction = 0
         same_class_fractions.append(same_field_fraction)
@@ -74,7 +74,7 @@ def same_class_rand_n(Graph, n = 250):
     plt.show()
 
 def compute_modularity(Graph,partitioning):
-    L = Graph.number_of_edges()
+    L = Graph.number_of_edges() * 2 # In = out
     M = 0
     communities = set(partitioning.values())
 
@@ -90,7 +90,7 @@ def compute_modularity(Graph,partitioning):
 def double_edge_swap(GG,N):
     i = 0
     G_copy = GG.copy()
-    while(i<2*N):
+    while(i<N):
         edges = list(G_copy.edges()) # update edges after adding and removal
         (u, v), (x, y) = random.sample(edges, 2) # picking two random edges
         if (u != v) and (v != x) and (u, y) not in G_copy.edges() and (x, v) not in G_copy.edges(): # checking conditions
@@ -98,7 +98,9 @@ def double_edge_swap(GG,N):
             G_copy.add_edge(x, v)
             G_copy.remove_edge(u, v)
             G_copy.remove_edge(x, y)
-            i+=1
+        i+=1
+        if i % 1000 == 0:
+            print(i)
     return G_copy
 
 def assortative_matrix(Graph,unique_labels):
@@ -175,7 +177,7 @@ if __name__ == "__main__":
     print(f"Assortativity coefficient: {r1:.3f}")
 
     # Modularity Family split of Reptile Graph
-    Family_split = nx.get_node_attributes(G_reptile_attr, "Class")
+    Family_split = nx.get_node_attributes(G_reptile_attr, "Family")
 
     #Then we compute the modularity of the partitioning by using the function above
     modularity = compute_modularity(G_reptile_attr, Family_split)
@@ -191,12 +193,8 @@ if __name__ == "__main__":
         degree_2.append(G_new.degree(node))
 
     print(degree_1 == degree_2)
-    plt.hist(degree_1,bins=20)
-    plt.title("Degree for Reptile Network")
-    plt.show()
-    plt.hist(degree_2,bins=20)
-    plt.title("Degree for new Network")
-    plt.show()
+    modularity = compute_modularity(G_new, Family_split)
+    print(f"The modularity of the randomly shuffled network: {modularity:.3f}")
     """
     #Louvain algorithm
     partition = community.best_partition(G_reptile,random_state=42) # dictionary, keys are the nodes and values are communities for each node
