@@ -146,7 +146,7 @@ if __name__ == "__main__":
         banned_set.add(clean_family(c[items]["Superfamily:"]))
         banned_set.add(clean_family(c[items]["Family:"]))
     #edgelist = [None]*len(b)
-    banned_set = {}
+    banned_set = {} # Comment this to see the "cleaned" network
     edgelist = []
     for i,items in enumerate(b):
         if items[0] not in banned_set and items[1] not in banned_set:
