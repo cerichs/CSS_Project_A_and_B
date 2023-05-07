@@ -34,25 +34,25 @@ def add_attr(Graph,attr_dict):
         Graph.remove_node(names)
     return Graph
 
-def same_family(G):
-    same_family_fractions = []
+def same_class(G):
+    same_class_fractions = []
     for node in G.nodes():
-        same_family_neighbors = 0
+        same_class_fractions = 0
         total_neighbors = 0
         
         for neighbor in G.neighbors(node):
             if G.nodes[neighbor]["Class"] == G.nodes[node]["Class"]:
-                same_family_neighbors += 1
+                same_class_fractions += 1
             total_neighbors += 1
         
         if total_neighbors > 0:
-            same_field_fraction = same_family_neighbors / total_neighbors
+            same_field_fraction = same_class_fractions / total_neighbors
         else:
             same_field_fraction = 0
-        same_family_fractions.append(same_field_fraction)
-    return same_family_fractions
+        same_class_fractions.append(same_field_fraction)
+    return same_class_fractions
 
-def same_family_rand(Graph):
+def same_class_rand(Graph):
     shuffled_G = Graph.copy()
     Family = [Graph.nodes[node]["Class"] for node in Graph.nodes()]
     random.shuffle(Family)
@@ -61,16 +61,16 @@ def same_family_rand(Graph):
         shuffled_G.nodes[node]["Class"] = Family[i]
     return shuffled_G
 
-def same_family_rand_n(Graph, n = 250):
+def same_class_rand_n(Graph, n = 250):
     results = []
     Family = [Graph.nodes[node]["Class"] for node in Graph.nodes()]
     for i in range(n):
-        temp = same_family_rand(Graph)
-        results.append(np.mean(same_family(temp)))
+        temp = same_class_rand(Graph)
+        results.append(np.mean(same_class(temp)))
     plt.hist(results,label = "Random", bins = 20)
     plt.xlabel("Fraction")
     plt.ylabel("Frequency")
-    plt.title("Fraction of edges in same family")
+    plt.title("Fraction of edges in same Class")
     plt.show()
 
 def compute_modularity(Graph,partitioning):
@@ -156,15 +156,15 @@ if __name__ == "__main__":
     print(G_reptile)
     G_reptile_attr = add_attr(G_reptile,c)
 
-    # Same family fractions
-    same_family_fractions = same_family(G_reptile_attr)
-    print(f"The average fraction is: {np.mean(same_family_fractions):.3f}")
+    # Same class fractions
+    same_class_fractions = same_class(G_reptile_attr)
+    print(f"The average fraction is: {np.mean(same_class_fractions):.3f}")
 
-    # Same family fractions for random graph
-    same_family_fractions_rand = same_family_rand(G_reptile_attr)
-    print(f"The average fraction is: {np.mean(same_family(same_family_fractions_rand)):.3f}")
+    # Same class fractions for random graph
+    same_class_fractions_rand = same_class_rand(G_reptile_attr)
+    print(f"The average fraction is: {np.mean(same_class(same_class_fractions_rand)):.3f}")
 
-    # Same family fractions
+    # Same class fractions
     #same_family_rand_n(G_reptile_attr, n = 250)
 
     # Assortativity coefficient 
