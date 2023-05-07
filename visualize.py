@@ -48,4 +48,4 @@ if __name__ == "__main__":
     network, config = visualize(G)
     #data1 = nx.node_link_data(G)
     #json.dump(data1, open('data/data_total.json','w'))
-    
+
